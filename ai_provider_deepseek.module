@@ -21,7 +21,7 @@ function ai_provider_deepseek_ai_provider_info() {
   return [
     'deepseek' => [
       'label' => t('DeepSeek'),
-      'description' => t('DeepSeek reasoning (DeepSeek-R1) and general chat (DeepSeek-V3) models via OpenAI-compatible endpoints.'),
+      'description' => t('DeepSeek chat and reasoning models via their OpenAI-compatible API.'),
       'class' => 'AIDeepSeekAdapter',
       'website' => 'https://www.deepseek.com/',
       'key_url' => 'https://platform.deepseek.com/api_keys',

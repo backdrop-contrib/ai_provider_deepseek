@@ -11,17 +11,19 @@ route to, using the OpenAI-compatible API at `https://api.deepseek.com`.
 |---|---|---|
 | Chat | Yes | Streaming supported. JSON mode supported; JSON schema requests fall back to JSON mode (DeepSeek has no json_schema format). |
 | Completions | Yes | Sent as a single chat message; uses the chat endpoint. |
-| Tool calling | Yes | `deepseek-chat` only; the reasoner model does not support function calling. |
-| Thinking | Yes | `deepseek-reasoner` (R1). |
+| Tool calling | Yes | The model's `reasoning_content` is returned so agent tool loops can send it back, as DeepSeek requires in thinking mode. |
+| Thinking | Yes | Thinking mode is on by default for current models. |
 | Vision | No | |
 | Embeddings | No | |
 | Image generation | No | |
 | Moderation | No | |
 | Speech-to-text | No | |
 
-The model list is fetched from the API's `/models` endpoint, falling back to
-`deepseek-chat` and `deepseek-reasoner` when the request fails. Temperature is
-not sent for reasoner models, which reject it.
+The model list is fetched from the API's `/models` endpoint. There is no
+built-in fallback list: DeepSeek renames models between generations. `/models`
+has no capability metadata, so every model is offered for chat, tool calling
+and thinking; adjust this on the Model capabilities page. Temperature is always
+sent; DeepSeek ignores it in thinking mode.
 
 The base URL is stored in `ai_provider_deepseek.settings` (`base_url`) and can
 be changed through configuration management if you use a proxy.
