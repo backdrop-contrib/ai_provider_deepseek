@@ -1,0 +1,8 @@
+name = AI Provider DeepSeek
+description = DeepSeek provider offering high-efficiency reasoning (R1) and chat (V3) models.
+backdrop = 1.x
+type = module
+php = 8.0
+package = AI
+dependencies[] = ai
+dependencies[] = key

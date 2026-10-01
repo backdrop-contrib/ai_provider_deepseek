@@ -1,0 +1,43 @@
+<?php
+
+/**
+ * @file
+ * DeepSeek provider for AI core.
+ */
+
+/**
+ * Implements hook_autoload_info().
+ */
+function ai_provider_deepseek_autoload_info() {
+  return [
+    'AIDeepSeekAdapter' => 'includes/AIDeepSeekAdapter.php',
+  ];
+}
+
+/**
+ * Implements hook_ai_provider_info().
+ */
+function ai_provider_deepseek_ai_provider_info() {
+  return [
+    'deepseek' => [
+      'label' => t('DeepSeek'),
+      'description' => t('DeepSeek reasoning (DeepSeek-R1) and general chat (DeepSeek-V3) models via OpenAI-compatible endpoints.'),
+      'class' => 'AIDeepSeekAdapter',
+      'website' => 'https://www.deepseek.com/',
+      'key_url' => 'https://platform.deepseek.com/api_keys',
+      'models_url' => 'https://api-docs.deepseek.com/',
+    ],
+  ];
+}
+
+/**
+ * Implements hook_config_info().
+ */
+function ai_provider_deepseek_config_info() {
+  return [
+    'ai_provider_deepseek.settings' => [
+      'label' => t('DeepSeek Settings'),
+      'group' => t('Configuration'),
+    ],
+  ];
+}
