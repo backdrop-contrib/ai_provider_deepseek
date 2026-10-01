@@ -49,23 +49,19 @@ class AIDeepSeekAdapter extends AIAdapterBase {
       $result = $this->makeRequest($this->baseUrl . '/models', [], [], 'GET', 10);
       if (!empty($result['data']) && is_array($result['data'])) {
         foreach ($result['data'] as $model) {
-          $id = $model['id'] ?? ($model['name'] ?? NULL);
+          $id = $model['id'] ?? NULL;
           if (!empty($id)) {
-            $models[$id] = $model['name'] ?? $id;
+            $models[$id] = $id;
           }
         }
       }
     }
     catch (\Exception $e) {
-      watchdog('ai_provider_deepseek', 'Failed to fetch DeepSeek models: @message', ['@message' => $e->getMessage()], WATCHDOG_DEBUG);
+      watchdog('ai_provider_deepseek', 'Failed to fetch DeepSeek models: @message', ['@message' => $e->getMessage()], WATCHDOG_WARNING);
     }
 
-    if (empty($models)) {
-      $models = [
-        'deepseek-chat' => 'DeepSeek Chat (V3)',
-        'deepseek-reasoner' => 'DeepSeek Reasoner (R1)',
-      ];
-    }
+    // No built-in fallback list: DeepSeek renames its models between
+    // generations, so a hardcoded list goes stale.
 
     asort($models);
     return $this->models = $models;
@@ -79,36 +75,11 @@ class AIDeepSeekAdapter extends AIAdapterBase {
     $capability = ai_normalize_capability_name($capability);
     $filtered = [];
 
-    foreach ($models as $id => $label) {
-      $ok = FALSE;
-      switch ($capability) {
-        case 'text':
-        case 'chat':
-          $ok = TRUE;
-          break;
-
-        case 'thinking':
-          $ok = (bool) preg_match('/reasoner|r1/i', $id);
-          break;
-
-        case 'tool_calling':
-          // DeepSeek-R1 does not support function calling; V3 (chat) does.
-          $ok = !preg_match('/reasoner/i', $id);
-          break;
-
-        case 'vision':
-        case 'embeddings':
-        case 'embedding':
-        case 'image':
-        case 'moderation':
-        case 'stt':
-          $ok = FALSE;
-          break;
-      }
-
-      if ($ok) {
-        $filtered[$id] = $label;
-      }
+    // /models carries no capability metadata. Every current DeepSeek model
+    // takes text, tool calls and thinking mode (on by default); anything else
+    // can be assigned on the Model capabilities page.
+    if (in_array($capability, ['text', 'tool_calling', 'thinking'], TRUE)) {
+      $filtered = $models;
     }
 
     backdrop_alter('ai_model_capabilities', $filtered, $capability, $this);
@@ -132,15 +103,13 @@ class AIDeepSeekAdapter extends AIAdapterBase {
   public function chat(string $model, array $messages, $temperature, $max_tokens = 1024, bool $stream_response = FALSE, array $context_extra = []) {
     $url = $this->baseUrl . '/chat/completions';
 
+    // Thinking mode ignores temperature without an error, so it is always
+    // sent and applies when thinking is off.
     $payload = [
       'model' => $model,
       'messages' => $messages,
+      'temperature' => (float) $temperature,
     ];
-
-    // DeepSeek Reasoner does not support temperature overrides.
-    if (!str_contains($model, 'reasoner')) {
-      $payload['temperature'] = (float) $temperature;
-    }
 
     if ((int) $max_tokens > 0) {
       $payload['max_tokens'] = (int) $max_tokens;
@@ -189,11 +158,8 @@ class AIDeepSeekAdapter extends AIAdapterBase {
       'messages' => $messages,
       'tools' => $tools,
       'tool_choice' => $tool_choice,
+      'temperature' => (float) $temperature,
     ];
-
-    if (!str_contains($model, 'reasoner')) {
-      $payload['temperature'] = (float) $temperature;
-    }
 
     if ((int) $max_tokens > 0) {
       $payload['max_tokens'] = (int) $max_tokens;
